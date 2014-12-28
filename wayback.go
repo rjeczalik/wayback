@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -29,29 +30,86 @@ type response struct {
 	} `json:"archived_snapshots""`
 }
 
+func ndigit(i uint64) (n int) {
+	for ; i != 0; i /= 10 {
+		n++
+	}
+	return
+}
+
+// TimeLayout is Timestamp's time format for use with time.Parse and
+// time.(Time).Format functions.
+const TimeLayout = "20060102150405"
+
 // Timestamp represents a timestamp value which format is YYYYMMDDhhmmss.
-type Timestamp uint64
+type Timestamp struct {
+	s string
+}
 
 // NewTimestamp gives new timestamp value converted from the given time.
 func NewTimestamp(t time.Time) Timestamp {
-	return Timestamp(t.Second() + t.Minute()*100 + t.Hour()*10000 + t.Day()*1000000 +
-		int(t.Month())*100000000 + t.Year()*10000000000)
+	return Timestamp{s: t.Format(TimeLayout)}
+}
+
+var layouts = []string{
+	time.ANSIC,
+	time.UnixDate,
+	time.RubyDate,
+	time.RFC822,
+	time.RFC850,
+	time.RFC1123,
+	time.RFC3339,
+}
+
+// ParseTimestamp tries to parse the given string into a Timestamp value. If it
+// is a digit, it parses it into uint64 and calls NewTimestamp on it. Otherwise
+// it tries to parse a time.Time and upon success gives new Timestamp value via
+// NewTime function.
+//
+// TODO(rjeczalik): update doc
+func ParseTimestamp(layout, s string) (Timestamp, error) {
+	if layout != "" {
+		t, err := time.Parse(layout, s)
+		if err != nil {
+			return Timestamp{}, err
+		}
+		return NewTimestamp(t), nil
+	}
+	if t, err := strconv.ParseUint(s, 10, 64); err == nil {
+		s = strconv.FormatUint(t, 10)
+		switch n, m := len(s), len(TimeLayout); {
+		case n < m:
+			s = s + strings.Repeat("0", m-n)
+		case n > m:
+			s = s[:m]
+		}
+		return Timestamp{s: s}, nil
+	}
+	for _, l := range layouts {
+		if t, err := time.Parse(l, s); err == nil {
+			return NewTimestamp(t), nil
+		}
+	}
+	return Timestamp{}, errors.New("invalid time/timestamp value: " + s)
 }
 
 // Time converts the timestamp to a time value.
 func (t Timestamp) Time() time.Time {
-	return time.Now() // TODO
+	if t, err := time.Parse(TimeLayout, t.s); err == nil {
+		return t
+	}
+	return time.Time{}
 }
 
-// String converts the timestamp to string cutting of any following zeros.
+// String converts the timestamp to string. It cuts off any following zeros.
 func (t Timestamp) String() string {
-	s := strconv.FormatUint(uint64(t), 10)
-	for i := len(s) - 1; i >= 0; i-- {
-		if s[i] != '0' {
-			return s[:i+1]
+	i := len(t.s) - 1
+	for ; i > 3; i-- {
+		if t.s[i] != '0' {
+			break
 		}
 	}
-	return ""
+	return t.s[:i+1]
 }
 
 // UnamarshalJSON decodes quoted string into a timestamp value.
@@ -62,11 +120,7 @@ func (t *Timestamp) UnmarshalJSON(p []byte) error {
 	if err != nil {
 		return err
 	}
-	d, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return err
-	}
-	*t = Timestamp(d) // TODO
+	*t = Timestamp{s: s}
 	return nil
 }
 
@@ -118,6 +172,6 @@ func (c *Client) Available(url string) (string, time.Time, error) {
 // AvailableAt queries the archive for cached snapshot of website given by the url
 // and creation time. If it's available, the function returns its URL and creation
 // time which is the closest to the requested one.
-func (c *Client) AvailableAt(url string, timestamp uint64) (string, time.Time, error) {
-	return c.available(fmt.Sprintf(reqTimestamp, url, Timestamp(timestamp)))
+func (c *Client) AvailableAt(url string, timestamp Timestamp) (string, time.Time, error) {
+	return c.available(fmt.Sprintf(reqTimestamp, url, timestamp))
 }

@@ -1,11 +1,9 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/rjeczalik/wayback"
@@ -20,16 +18,6 @@ var (
 
 var client wayback.Client
 
-var layouts = []string{
-	time.ANSIC,
-	time.UnixDate,
-	time.RubyDate,
-	time.RFC822,
-	time.RFC850,
-	time.RFC1123,
-	time.RFC3339,
-}
-
 // Timestamp is a wrapper for wayback.Timestamp which implements flag.Value
 // interface.
 type Timestamp struct {
@@ -42,20 +30,9 @@ func (t Timestamp) String() string {
 }
 
 // Set implements flag.Value interface.
-func (t *Timestamp) Set(s string) error {
-	if d, err := strconv.ParseUint(s, 10, 64); err == nil {
-		t.Timestamp = wayback.Timestamp(d) // TODO(rjeczalik): validate timestamp
-		return nil
-	}
-	for _, layout := range layouts {
-		if d, err := time.Parse(layout, s); err == nil {
-			t.Timestamp = wayback.NewTimestamp(d)
-			return nil
-		} else {
-			fmt.Printf("Timestamp.Set(%s)=%v\n", s, err)
-		}
-	}
-	return errors.New("invalid time/timestamp value: " + s)
+func (t *Timestamp) Set(s string) (err error) {
+	t.Timestamp, err = wayback.ParseTimestamp("", s)
+	return
 }
 
 func die(v interface{}) {
@@ -81,8 +58,8 @@ func main() {
 		when   time.Time
 		err    error
 	)
-	if t.Timestamp != 0 {
-		cached, when, err = client.AvailableAt(url, uint64(t.Timestamp))
+	if t.String() != "" {
+		cached, when, err = client.AvailableAt(url, t.Timestamp)
 	} else {
 		cached, when, err = client.Available(url)
 	}
