@@ -30,13 +30,6 @@ type response struct {
 	} `json:"archived_snapshots"`
 }
 
-func ndigit(i uint64) (n int) {
-	for ; i != 0; i /= 10 {
-		n++
-	}
-	return
-}
-
 // TimeLayout is Timestamp's time format for use with time.Parse and
 // time.(Time).Format functions.
 const TimeLayout = "20060102150405"
