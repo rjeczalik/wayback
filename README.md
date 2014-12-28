@@ -4,6 +4,26 @@ wayback [![GoDoc](https://godoc.org/github.com/rjeczalik/wayback?status.svg)](ht
 Package wayback implements a client for Wayback Availability JSON API.
 See its website for details: https://archive.org/help/wayback_api.php
 
+*Example usage*
+
+```go
+package main
+
+import (
+	"log"
+
+	"github.com/rjeczalik/wayback"
+)
+
+func main() {
+	url, time, err := wayback.Available("github.com")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(url, "captured at", time)
+}
+```
+
 ## cmd/wayback [![GoDoc](https://godoc.org/github.com/rjeczalik/wayback/cmd/wayback?status.png)](https://godoc.org/github.com/rjeczalik/wayback/cmd/wayback)
 
 *Installation*
