@@ -168,3 +168,25 @@ func (c *Client) Available(url string) (string, time.Time, error) {
 func (c *Client) AvailableAt(url string, timestamp Timestamp) (string, time.Time, error) {
 	return c.available(fmt.Sprintf(reqTimestamp, url, timestamp))
 }
+
+// DefaultClient is default client which uses http.DefaultClient for issuing
+// HTTP requests.
+var DefaultClient Client
+
+// Available queries the archive for cached snapshot of website given by the url.
+// If it's available, it returns its URL and creation time of the most recent
+// snapshot. Otherwise it returns non-nil error.
+//
+// Available uses DefaultClient for querying Wayback endpoint.
+func Available(url string) (string, time.Time, error) {
+	return DefaultClient.Available(url)
+}
+
+// AvailableAt queries the archive for cached snapshot of website given by the url
+// and creation time. If it's available, the function returns its URL and creation
+// time which is the closest to the requested one.
+//
+// AvailableAt uses DefaultClient for querying Wayback endpoint.
+func AvailableAt(url string, timestamp Timestamp) (string, time.Time, error) {
+	return DefaultClient.AvailableAt(url, timestamp)
+}

@@ -16,8 +16,6 @@ var (
 	t   Timestamp
 )
 
-var client wayback.Client
-
 // Timestamp is a wrapper for wayback.Timestamp which implements flag.Value
 // interface.
 type Timestamp struct {
@@ -59,9 +57,9 @@ func main() {
 		err    error
 	)
 	if t.String() != "" {
-		cached, when, err = client.AvailableAt(url, t.Timestamp)
+		cached, when, err = wayback.AvailableAt(url, t.Timestamp)
 	} else {
-		cached, when, err = client.Available(url)
+		cached, when, err = wayback.Available(url)
 	}
 	if err != nil {
 		die(err)
