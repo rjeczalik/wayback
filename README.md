@@ -15,3 +15,14 @@ See its website for details: https://archive.org/help/wayback_api.php
 *Documentation*
 
 [godoc.org/github.com/rjeczalik/wayback/cmd/wayback](http://godoc.org/github.com/rjeczalik/wayback/cmd/wayback)
+
+*Example usage*
+
+```bash
+~ $ wayback github.com
+http://web.archive.org/web/20141226100456/https://github.com/	Fri Dec 26 10:04:56 2014
+```
+```bash
+~ $ wayback -t 2010 github.com
+http://web.archive.org/web/20100102002654/http://github.com/	Sat Jan  2 00:26:54 2010
+```
