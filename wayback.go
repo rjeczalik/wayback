@@ -27,7 +27,7 @@ type response struct {
 			Timestamp Timestamp `json:"timestamp"`
 			Status    string
 		} `json:"closest"`
-	} `json:"archived_snapshots""`
+	} `json:"archived_snapshots"`
 }
 
 func ndigit(i uint64) (n int) {
